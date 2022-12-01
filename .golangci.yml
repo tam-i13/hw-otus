@@ -23,7 +23,8 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - deadcode
+    # - deadcode
+    # 'deadcode' is deprecated (since v1.49.0)
     - depguard
     - dogsled
     - dupl
@@ -45,7 +46,8 @@ linters:
     - gosec
     - gosimple
     - govet
-    - ifshort
+    #- ifshort
+    # 'ifshort' is deprecated (since v1.48.0)
     - importas
     - ineffassign
     - lll
@@ -61,7 +63,8 @@ linters:
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
-    - structcheck
+    #- structcheck
+    #'structcheck' is deprecated (since v1.49.0)
     - stylecheck
     - tagliatelle
     - thelper
@@ -69,6 +72,7 @@ linters:
     - unconvert
     - unparam
     - unused
-    - varcheck
+    #- varcheck
+    # 'varcheck' is deprecated (since v1.49.0)
     - wastedassign
     - whitespace
