@@ -13,11 +13,6 @@ const (
 
 var rgx = regexp.MustCompile("[a-zA-Z0-9А-Яа-я]*.[a-zA-Z0-9А-Яа-я]")
 
-type wordsStruct struct {
-	name  string
-	count int
-}
-
 func search(s []int, v int) bool {
 	for _, i := range s {
 		tmp := i
@@ -33,9 +28,11 @@ func Top10(s string) []string {
 	// формируем map  со словами и количеством вхождений
 	for _, w := range strings.Fields(s) {
 		tmpWord := w
-		//получаем слово без спец. символов или без спец. символов и с тире
-		if len(tmpWord) > 0 && (unicode.IsPunct(rune(tmpWord[len(tmpWord)-1])) || unicode.IsPunct(rune(tmpWord[len(tmpWord)-1]))) {
-			tmpWord = strings.Join(rgx.FindStringSubmatch(tmpWord), "")
+		// получаем слово без спец символов или без спец символов и с тире
+		if len(tmpWord) > 0 {
+			if unicode.IsPunct(rune(tmpWord[0])) || unicode.IsPunct(rune(tmpWord[len(tmpWord)-1])) {
+				tmpWord = strings.Join(rgx.FindStringSubmatch(tmpWord), "")
+			}
 		}
 		// проверяем и записываем в map
 		_, ok := words[strings.ToLower(tmpWord)]
@@ -54,7 +51,7 @@ func Top10(s string) []string {
 			countSlice = append(countSlice, v)
 		}
 	}
-	// сортируем и переварачиваем, первым элементом будет самое частое слово (не смог найти сортировку по убываю, знаете такую?)
+	// сортируем и переварачиваем (не смог найти сортировку по убываю, знаете такую?)
 	sort.Ints(countSlice)
 	for i := len(countSlice)/2 - 1; i >= 0; i-- {
 		opp := len(countSlice) - 1 - i
@@ -75,9 +72,7 @@ func Top10(s string) []string {
 		}
 		// для этого количества повторений сортируем вывод по алфавиту
 		sort.Strings(tmpSliceWords)
-		for _, v := range tmpSliceWords {
-			finalSlace = append(finalSlace, v)
-		}
+		finalSlace = append(finalSlace, tmpSliceWords...)
 	}
 	// если мало слов в тексте было, выводим что есть
 	if len(finalSlace) > lenFinalSlace {
