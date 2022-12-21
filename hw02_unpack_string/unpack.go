@@ -2,6 +2,7 @@ package hw02unpackstring
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -9,33 +10,40 @@ import (
 
 var ErrInvalidString = errors.New("invalid string")
 
-func Unpack(ls string) (string, error) {
-	var finalString strings.Builder
-	s := []rune(ls)
+func isDigit09(r rune) bool {
+	if r >= 48 && r <= 57 {
+		return true
+	}
+	return false
+}
 
-	if len(s) == 0 {
+func Unpack(s string) (string, error) {
+	var finalString strings.Builder
+	sliceRune := []rune(s)
+
+	if len(sliceRune) == 0 {
 		return "", nil
 	}
 
-	if unicode.IsDigit(s[0]) {
-		return "First rune is digit.", ErrInvalidString
+	if isDigit09(sliceRune[0]) {
+		return "", fmt.Errorf("First rune is digit. %w", ErrInvalidString)
 	}
 
-	for i := 0; i < len(s); i++ {
-		tmpRune := s[i]
+	for i := 0; i < len(sliceRune); i++ {
+		tmpRune := sliceRune[i]
 
-		if strings.EqualFold(string(s[i]), `\`) && (unicode.IsDigit(s[i+1]) || strings.EqualFold(string(s[i+1]), `\`)) {
-			tmpRune = s[i+1]
+		if i+1 < len(sliceRune) && string(sliceRune[i]) == `\` && (isDigit09(sliceRune[i+1]) || string(sliceRune[i+1]) == `\`) {
+			tmpRune = sliceRune[i+1]
 			i++
-		} else if strings.EqualFold(string(s[i]), `\`) && unicode.IsLetter(s[i+1]) {
-			return "After / rune. ERROR.", ErrInvalidString
+		} else if i+1 < len(sliceRune) && string(sliceRune[i]) == `\` && unicode.IsLetter(sliceRune[i+1]) {
+			return "", fmt.Errorf("After / rune. ERROR. %w", ErrInvalidString)
 		}
 
-		if i+1 < len(s) && unicode.IsDigit(s[i+1]) {
-			if i+2 < len(s) && unicode.IsDigit(s[i+2]) {
-				return "Double digit.", ErrInvalidString
+		if i+1 < len(sliceRune) && isDigit09(sliceRune[i+1]) {
+			if i+2 < len(sliceRune) && isDigit09(sliceRune[i+2]) {
+				return "", fmt.Errorf("Double digit. %w", ErrInvalidString)
 			}
-			t, _ := strconv.Atoi(string(s[i+1]))
+			t, _ := strconv.Atoi(string(sliceRune[i+1]))
 			finalString.WriteString(strings.Repeat(string(tmpRune), t))
 			i++
 		} else {
