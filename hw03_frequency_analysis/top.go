@@ -60,14 +60,14 @@ func Top10(s string) []string {
 	}
 	finalSlace := make([]string, 0, lenFinalSlace)
 
-	flag := false
+	flag := true
 	i := 0
 	// формируем финальный слайс, выходим когда он достигнет нужного размера
-	for flag == false {
+	for flag {
 		sort.Strings(sliceWords[i].words)
 		finalSlace = append(finalSlace, sliceWords[i].words...)
 		if len(finalSlace) >= lenFinalSlace {
-			flag = true
+			flag = false
 		}
 		i++
 	}
