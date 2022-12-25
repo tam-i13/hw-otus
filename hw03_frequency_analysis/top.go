@@ -7,23 +7,20 @@ import (
 	"unicode"
 )
 
-const (
-	lenFinalSlace = 10
-)
-
 var rgx = regexp.MustCompile("[a-zA-Z0-9А-Яа-я]*.[a-zA-Z0-9А-Яа-я]")
 
-func search(s []int, v int) bool {
-	for _, i := range s {
-		tmp := i
-		if tmp == v {
-			return true
-		}
-	}
-	return false
+type wordsStruct struct {
+	words []string
+	count int
 }
 
 func Top10(s string) []string {
+	// проверяем на пустую строку и выходим если это так
+	if s == "" {
+		return []string{}
+	}
+
+	lenFinalSlace := 10
 	words := make(map[string]int)
 	// формируем map  со словами и количеством вхождений
 	for _, w := range strings.Fields(s) {
@@ -34,49 +31,45 @@ func Top10(s string) []string {
 				tmpWord = strings.Join(rgx.FindStringSubmatch(tmpWord), "")
 			}
 		}
-		// проверяем и записываем в map
-		_, ok := words[strings.ToLower(tmpWord)]
-		if len(tmpWord) > 0 && ok {
-			words[strings.ToLower(tmpWord)] = words[strings.ToLower(tmpWord)] + 1
-		} else {
-			words[strings.ToLower(tmpWord)] = 1
+		// проверяем на пустоту и записываем в map
+		if len(tmpWord) > 0 {
+			words[strings.ToLower(tmpWord)]++
 		}
 	}
 
-	// фирмируем слайс с уникальным количеством вхождений
-	countSlice := []int{}
-	for _, v := range words {
-		// написал функцию поиска, но потом увидел что такая есть в стандартном пакете, решил оставить
-		if !search(countSlice, v) {
-			countSlice = append(countSlice, v)
-		}
-	}
-	// сортируем и переварачиваем (не смог найти сортировку по убываю, знаете такую?)
-	sort.Ints(countSlice)
-	for i := len(countSlice)/2 - 1; i >= 0; i-- {
-		opp := len(countSlice) - 1 - i
-		countSlice[i], countSlice[opp] = countSlice[opp], countSlice[i]
+	// создаем мап где ключ это количество вхождений а занчение это слуйс из слов
+	wordsKeyCount := make(map[int][]string)
+	for k, v := range words {
+		wordsKeyCount[v] = append(wordsKeyCount[v], k)
 	}
 
-	// формируем финальный слайс
-	finalSlace := []string{}
-	for i := 0; i < lenFinalSlace; i++ {
-		tmpSliceWords := []string{}
-		// нужно только lenFinalSlace элементов
-		if len(finalSlace) < lenFinalSlace {
-			for k, v := range words {
-				if i < len(countSlice) && v == countSlice[i] {
-					tmpSliceWords = append(tmpSliceWords, k)
-				}
-			}
+	// создаем слайс из структур количесто вхождений и слайс слов
+	// это позволит сразу брать слайсы слов и сортировать перед вставкой в финальный слайс
+	sliceWords := make([]wordsStruct, 0, len(wordsKeyCount))
+	for k, v := range wordsKeyCount {
+		sliceWords = append(sliceWords, wordsStruct{words: v, count: k})
+	}
+	// сортируем по количеству вхождений
+	sort.Slice(sliceWords, func(i, j int) bool {
+		return sliceWords[i].count > sliceWords[j].count
+	})
+
+	// создаем финальный слайс по нужной длине
+	if len(words) < lenFinalSlace {
+		lenFinalSlace = len(words)
+	}
+	finalSlace := make([]string, 0, lenFinalSlace)
+
+	flag := false
+	i := 0
+	// формируем финальный слайс, выходим когда он достигнет нужного размера
+	for flag == false {
+		sort.Strings(sliceWords[i].words)
+		finalSlace = append(finalSlace, sliceWords[i].words...)
+		if len(finalSlace) >= lenFinalSlace {
+			flag = true
 		}
-		// для этого количества повторений сортируем вывод по алфавиту
-		sort.Strings(tmpSliceWords)
-		finalSlace = append(finalSlace, tmpSliceWords...)
+		i++
 	}
-	// если мало слов в тексте было, выводим что есть
-	if len(finalSlace) > lenFinalSlace {
-		finalSlace = finalSlace[:lenFinalSlace]
-	}
-	return finalSlace
+	return finalSlace[:lenFinalSlace]
 }
