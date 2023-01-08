@@ -31,7 +31,7 @@ func (l *list) Front() *ListItem {
 
 	var tmpNode *ListItem
 
-	for k, _ := range l.List {
+	for k := range l.List {
 		tmpNode = l.List[k]
 	}
 
@@ -53,7 +53,7 @@ func (l *list) Back() *ListItem {
 
 	var tmpNode *ListItem
 
-	for k, _ := range l.List {
+	for k := range l.List {
 		tmpNode = l.List[k]
 	}
 	flag := false
@@ -125,7 +125,6 @@ func (l *list) MoveToFront(i *ListItem) {
 		l.Remove(i)
 		l.PushFront(i.Value)
 	}
-
 }
 
 func NewList() List {

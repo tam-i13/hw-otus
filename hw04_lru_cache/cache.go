@@ -18,36 +18,35 @@ type lruCache struct {
 
 func (l *lruCache) Set(key Key, value interface{}) bool {
 	flag := false
-	if l.queue.Len() == 0 {
-		l.items[key] = l.queue.PushFront(value)
-	} else {
-		for k, _ := range l.items {
-			if k == key {
-				flag = true
-			}
-		}
-
-		if flag {
-			l.items[key].Value = value
-			l.queue.MoveToFront(l.items[key])
-		}
-
-		if !flag {
-			if l.capacity >= l.queue.Len() {
-				l.queue.Remove(l.queue.Back())
-			}
-
-			l.items[key] = l.queue.PushFront(value)
+	for k := range l.items {
+		if k == key {
+			flag = true
 		}
 	}
-	return flag
 
+	if l.queue.Len() != 0 && flag {
+		l.items[key].Value = value
+		l.queue.MoveToFront(l.items[key])
+	}
+
+	if l.queue.Len() != 0 && !flag {
+		if l.capacity >= l.queue.Len() {
+			l.queue.Remove(l.queue.Back())
+		}
+
+		l.items[key] = l.queue.PushFront(value)
+	}
+
+	if l.queue.Len() == 0 {
+		l.items[key] = l.queue.PushFront(value)
+	}
+	return flag
 }
 
 func (l *lruCache) Get(key Key) (interface{}, bool) {
 	flag := false
 
-	for k, _ := range l.items {
+	for k := range l.items {
 		if k == key {
 			flag = true
 		}
@@ -61,6 +60,7 @@ func (l *lruCache) Get(key Key) (interface{}, bool) {
 
 	return nil, flag
 }
+
 func (l *lruCache) Clear() {
 	l.queue = NewList()
 	l.items = make(map[Key]*ListItem, l.capacity)
