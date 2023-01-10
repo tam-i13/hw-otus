@@ -24,22 +24,23 @@ func (l *lruCache) Set(key Key, value interface{}) bool {
 		}
 	}
 
-	if l.queue.Len() != 0 && flag {
-		l.items[key].Value = value
-		l.queue.MoveToFront(l.items[key])
+	if flag {
+		l.items[key] = l.queue.PushFront(value)
 	}
 
-	if l.queue.Len() != 0 && !flag {
-		if l.capacity >= l.queue.Len() {
+	if !flag {
+		if l.capacity == l.queue.Len() {
+			for k, v := range l.items {
+				if v == l.queue.Back() {
+					delete(l.items, k)
+				}
+			}
 			l.queue.Remove(l.queue.Back())
 		}
 
 		l.items[key] = l.queue.PushFront(value)
 	}
 
-	if l.queue.Len() == 0 {
-		l.items[key] = l.queue.PushFront(value)
-	}
 	return flag
 }
 
