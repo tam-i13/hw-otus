@@ -18,10 +18,9 @@ type lruCache struct {
 
 func (l *lruCache) Set(key Key, value interface{}) bool {
 	flag := false
-	for k := range l.items {
-		if k == key {
-			flag = true
-		}
+
+	if _, ok := l.items[key]; ok {
+		flag = true
 	}
 
 	if flag {
