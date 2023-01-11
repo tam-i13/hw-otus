@@ -79,6 +79,34 @@ func TestCache(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, 3, val)
 	})
+
+	t.Run("delete logic", func(t *testing.T) {
+		c := NewCache(3)
+
+		setToCache1 := c.Set("1", 1)
+		require.False(t, setToCache1)
+
+		setToCache2 := c.Set("2", 2)
+		require.False(t, setToCache2)
+
+		setToCache3 := c.Set("3", 3)
+		require.False(t, setToCache3)
+
+		val, ok := c.Get("1")
+		require.True(t, ok)
+		require.Equal(t, 1, val)
+
+		val, ok = c.Get("2")
+		require.True(t, ok)
+		require.Equal(t, 2, val)
+
+		setToCache4 := c.Set("4", 4)
+		require.False(t, setToCache4)
+
+		val, ok = c.Get("3")
+		require.False(t, ok)
+		require.Nil(t, val)
+	})
 }
 
 func TestCacheMultithreading(t *testing.T) {
