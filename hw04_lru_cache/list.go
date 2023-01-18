@@ -17,7 +17,9 @@ type ListItem struct {
 }
 
 type list struct {
-	List map[*ListItem]*ListItem
+	List          map[*ListItem]*ListItem
+	FrontPosition *ListItem
+	BackPosition  *ListItem
 }
 
 func (l *list) Len() int {
@@ -28,43 +30,14 @@ func (l *list) Front() *ListItem {
 	if l.Len() == 0 {
 		return nil
 	}
-
-	var tmpNode *ListItem
-
-	for k := range l.List {
-		tmpNode = l.List[k]
-	}
-
-	flag := false
-	for !flag {
-		if tmpNode.Prev == nil {
-			flag = true
-		} else {
-			tmpNode = tmpNode.Prev
-		}
-	}
-	return tmpNode
+	return l.FrontPosition
 }
 
 func (l *list) Back() *ListItem {
 	if l.Len() == 0 {
 		return nil
 	}
-
-	var tmpNode *ListItem
-
-	for k := range l.List {
-		tmpNode = l.List[k]
-	}
-	flag := false
-	for !flag {
-		if tmpNode.Next == nil {
-			flag = true
-		} else {
-			tmpNode = tmpNode.Next
-		}
-	}
-	return tmpNode
+	return l.BackPosition
 }
 
 func (l *list) PushFront(v interface{}) *ListItem {
@@ -81,7 +54,10 @@ func (l *list) PushFront(v interface{}) *ListItem {
 		front.Prev = &newNode
 	} else {
 		l.List[&newNode] = &newNode
+		l.BackPosition = &newNode
 	}
+
+	l.FrontPosition = &newNode
 
 	return &newNode
 }
@@ -100,7 +76,10 @@ func (l *list) PushBack(v interface{}) *ListItem {
 		back.Next = &newNode
 	} else {
 		l.List[&newNode] = &newNode
+		l.FrontPosition = &newNode
 	}
+
+	l.BackPosition = &newNode
 
 	return &newNode
 }
@@ -112,9 +91,11 @@ func (l *list) Remove(i *ListItem) {
 	}
 	if i.Next == nil && i.Prev != nil {
 		i.Prev.Next = i.Next
+		l.BackPosition = i.Prev
 	}
 	if i.Next != nil && i.Prev == nil {
 		i.Next.Prev = i.Prev
+		l.FrontPosition = i.Next
 	}
 
 	delete(l.List, i)
@@ -129,6 +110,8 @@ func (l *list) MoveToFront(i *ListItem) {
 
 func NewList() List {
 	return &list{
-		List: make(map[*ListItem]*ListItem),
+		List:          make(map[*ListItem]*ListItem),
+		FrontPosition: nil,
+		BackPosition:  nil,
 	}
 }

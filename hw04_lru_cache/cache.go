@@ -2,6 +2,11 @@ package hw04lrucache
 
 type Key string
 
+type KeyValue struct {
+	ValueStruct interface{}
+	KeyStruct   Key
+}
+
 type Cache interface {
 	Set(key Key, value interface{}) bool
 	Get(key Key) (interface{}, bool)
@@ -23,39 +28,33 @@ func (l *lruCache) Set(key Key, value interface{}) bool {
 		flag = true
 	}
 
-	if flag {
-		l.items[key] = l.queue.PushFront(value)
-	}
-
 	if !flag {
 		if l.capacity == l.queue.Len() {
-			for k, v := range l.items {
-				if v == l.queue.Back() {
-					delete(l.items, k)
-				}
-			}
-			l.queue.Remove(l.queue.Back())
+			backItem := l.queue.Back()
+			delete(l.items, backItem.Value.(KeyValue).KeyStruct)
+			l.queue.Remove(backItem)
 		}
-
-		l.items[key] = l.queue.PushFront(value)
 	}
 
+	l.items[key] = l.queue.PushFront(KeyValue{
+		KeyStruct:   key,
+		ValueStruct: value,
+	})
+	println(l.items[key])
 	return flag
 }
 
 func (l *lruCache) Get(key Key) (interface{}, bool) {
 	flag := false
 
-	for k := range l.items {
-		if k == key {
-			flag = true
-		}
+	if _, ok := l.items[key]; ok {
+		flag = true
 	}
 
 	if flag {
 		l.queue.MoveToFront(l.items[key])
 		tmp := l.items[key]
-		return tmp.Value, flag
+		return tmp.Value.(KeyValue).ValueStruct, flag
 	}
 
 	return nil, flag
