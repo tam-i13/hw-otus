@@ -4,6 +4,8 @@ import (
 	"errors"
 	"io"
 	"os"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -21,6 +23,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		if os.IsNotExist(err) {
 			return ErrFileNotExist
 		}
+		return err
 	}
 
 	if fileStat.Size() < offset {
@@ -64,13 +67,30 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 			return errFileSeek
 		}
 	}
-	_, errCopy := io.CopyN(fileDist, fileFrom, limit)
+
+	barInfo := 0
+	if fileStat.Size() < limit {
+		barInfo = int(fileStat.Size()) - int(offset)
+	} else {
+		tmp := fileStat.Size() - offset
+		if tmp < limit {
+			barInfo = int(tmp)
+		} else {
+			barInfo = int(limit)
+		}
+	}
+
+	bar1 := pb.Full.Start64(int64(barInfo))
+	reader := io.LimitReader(fileFrom, int64(barInfo))
+	barReader := bar1.NewProxyReader(reader)
+	_, errCopy := io.CopyN(fileDist, barReader, limit)
 	if errCopy != nil {
 		if errors.Is(errCopy, io.EOF) {
+			bar1.Finish()
 			return nil
 		}
 		return errCopy
 	}
-
+	bar1.Finish()
 	return nil
 }
