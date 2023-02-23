@@ -15,6 +15,8 @@ var (
 	ErrFolderNotExist = errors.New("folder not exist")
 )
 
+const trimString = " \t\n"
+
 type Environment map[string]EnvValue
 
 type EnvValue struct {
@@ -34,8 +36,7 @@ func checkDir(dir string) error {
 }
 
 func ReadDir(dir string) (Environment, error) {
-	err := checkDir(dir)
-	if err != nil {
+	if err := checkDir(dir); err != nil {
 		return nil, err
 	}
 
@@ -48,7 +49,7 @@ func ReadDir(dir string) (Environment, error) {
 
 	for _, tmpValue := range readDir {
 		if strings.Contains(tmpValue.Name(), "=") {
-			break
+			continue
 		}
 		targetPath := path.Join(dir, tmpValue.Name())
 
@@ -56,32 +57,25 @@ func ReadDir(dir string) (Environment, error) {
 		if err != nil {
 			return nil, err
 		}
-		if fileStat.Size() != 0 {
-			file, _ := os.Open(targetPath)
-			br := bufio.NewReader(file)
-			line, err := br.ReadBytes(byte('\n'))
-			if err != nil && err != io.EOF {
-				return nil, err
-			}
-			file.Close()
-
-			line = bytes.ReplaceAll(line, []byte("\x00"), []byte("\n"))
-
-			mekeString := strings.Builder{}
-			mekeString.Write(line)
-			finalValue := mekeString.String()
-
-			finalValue = strings.TrimRight(finalValue, " 	\n")
-
+		if fileStat.Size() == 0 {
 			envMap[tmpValue.Name()] = EnvValue{
-				Value:      finalValue,
-				NeedRemove: false,
-			}
-		} else {
-			envMap[tmpValue.Name()] = EnvValue{
-				Value:      "",
 				NeedRemove: true,
 			}
+			continue
+		}
+		file, _ := os.Open(targetPath)
+		br := bufio.NewReader(file)
+		line, err := br.ReadBytes(byte('\n'))
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		file.Close()
+
+		line = bytes.ReplaceAll(line, []byte("\x00"), []byte("\n"))
+
+		envMap[tmpValue.Name()] = EnvValue{
+			Value:      strings.TrimRight(string(line), trimString),
+			NeedRemove: false,
 		}
 	}
 
