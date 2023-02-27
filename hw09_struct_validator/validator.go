@@ -2,6 +2,7 @@ package hw09structvalidator
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -17,10 +18,18 @@ var (
 	ErrValueLessMin          = errors.New("value less min")
 	ErrValueMoreMax          = errors.New("value more max")
 	ErrValueNotInRange       = errors.New("value not in range")
-	ErrValueLenLess          = errors.New("len string value less")
+	ErrValueLenNotEqual      = errors.New("len not equal target")
 	ErrValueNotInRegexp      = errors.New("value not in regexp")
 	ErrValueNotInRangeString = errors.New("value not in range string")
 	ErrValidationTag         = errors.New("tag with an error")
+)
+
+const (
+	caseLen    = "len"
+	caseRegexp = "regexp"
+	caseIn     = "in"
+	caseMax    = "max"
+	caseMin    = "min"
 )
 
 type ValidationError struct {
@@ -33,9 +42,7 @@ type ValidationErrors []ValidationError
 func (v ValidationErrors) Error() string {
 	errorString := strings.Builder{}
 	for i, vv := range v {
-		errorString.WriteString(vv.Field)
-		errorString.WriteString(" - ")
-		errorString.WriteString(vv.Err.Error())
+		errorString.WriteString(fmt.Sprintf("%s - %s", vv.Field, vv.Err.Error()))
 		if i < len(v)-1 {
 			errorString.WriteString(", ")
 		}
@@ -61,15 +68,15 @@ func checkString(rs reflect.StructField, v string) (fValidationErrors Validation
 		ruleK := tmpRule[0]
 		ruleV := tmpRule[1]
 		switch ruleK {
-		case "len":
+		case caseLen:
 			ruleValue, err := strconv.Atoi(ruleV)
 			if err != nil {
 				return nil, err
 			}
 			if len(v) != ruleValue {
-				fValidationErrors = append(fValidationErrors, newValidationError(rs.Name, ErrValueLenLess))
+				fValidationErrors = append(fValidationErrors, newValidationError(rs.Name, ErrValueLenNotEqual))
 			}
-		case "regexp":
+		case caseRegexp:
 			matched, err := regexp.Match(ruleV, []byte(v))
 			if err != nil {
 				return nil, err
@@ -77,7 +84,7 @@ func checkString(rs reflect.StructField, v string) (fValidationErrors Validation
 			if !matched {
 				fValidationErrors = append(fValidationErrors, newValidationError(rs.Name, ErrValueNotInRegexp))
 			}
-		case "in":
+		case caseIn:
 			if !strings.Contains(ruleV, v) {
 				fValidationErrors = append(fValidationErrors, newValidationError(rs.Name, ErrValueNotInRangeString))
 			}
@@ -95,7 +102,7 @@ func checkInt(rs reflect.StructField, v int) (fValidationErrors ValidationErrors
 		tmpRule := strings.Split(tmp, ":")
 		ruleK, ruleV := tmpRule[0], tmpRule[1]
 		switch ruleK {
-		case "min":
+		case caseMin:
 			ruleValue, err := strconv.Atoi(ruleV)
 			if err != nil {
 				return nil, err
@@ -103,7 +110,7 @@ func checkInt(rs reflect.StructField, v int) (fValidationErrors ValidationErrors
 			if v < ruleValue {
 				fValidationErrors = append(fValidationErrors, newValidationError(rs.Name, ErrValueLessMin))
 			}
-		case "max":
+		case caseMax:
 			ruleValue, err := strconv.Atoi(ruleV)
 			if err != nil {
 				return nil, err
@@ -111,7 +118,7 @@ func checkInt(rs reflect.StructField, v int) (fValidationErrors ValidationErrors
 			if v > ruleValue {
 				fValidationErrors = append(fValidationErrors, newValidationError(rs.Name, ErrValueMoreMax))
 			}
-		case "in":
+		case caseIn:
 			ruleIn := strings.Split(ruleV, ",")
 			if len(ruleIn) != 2 {
 				return nil, ErrValidationTag
@@ -135,7 +142,8 @@ func checkSlice(rs reflect.StructField, a interface{}) (fValidationErrors Valida
 				return nil, err
 			}
 			if vErr != nil {
-				return vErr, err
+				e := newValidationError(rs.Name, fmt.Errorf("%w value %v", vErr[0].Err, v))
+				fValidationErrors = append(fValidationErrors, e)
 			}
 		}
 	}
@@ -148,7 +156,8 @@ func checkSlice(rs reflect.StructField, a interface{}) (fValidationErrors Valida
 				return nil, err
 			}
 			if vErr != nil {
-				return vErr, err
+				e := newValidationError(rs.Name, fmt.Errorf("%w value %v", vErr[0].Err, v))
+				fValidationErrors = append(fValidationErrors, e)
 			}
 		}
 	}
