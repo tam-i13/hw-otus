@@ -12,13 +12,13 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	for k, v := range env {
 		if v.NeedRemove {
 			os.Unsetenv(k)
-		} else {
-			if _, ok := os.LookupEnv(k); ok {
-				os.Unsetenv(k)
-			}
-
-			os.Setenv(k, v.Value)
+			continue
 		}
+		if _, ok := os.LookupEnv(k); ok {
+			os.Unsetenv(k)
+		}
+
+		os.Setenv(k, v.Value)
 	}
 
 	cmdForRun.Stdin = os.Stdin

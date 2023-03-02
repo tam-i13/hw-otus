@@ -14,6 +14,7 @@ func main() {
 	envMap, err := ReadDir(args[0])
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 	exitCodeRun := RunCmd(args[1:], envMap)
 

@@ -66,7 +66,7 @@ func ReadDir(dir string) (Environment, error) {
 		file, _ := os.Open(targetPath)
 		br := bufio.NewReader(file)
 		line, err := br.ReadBytes(byte('\n'))
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
 		file.Close()

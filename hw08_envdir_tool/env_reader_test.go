@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path"
@@ -18,86 +19,56 @@ var (
 )
 
 func TestReadDir(t *testing.T) {
-	t.Run("Is not folder", func(t *testing.T) {
-		_, res := ReadDir("./main.go")
-		require.Equal(t, ErrIsNotFolderTest, res)
-	})
+	tests := []struct {
+		start        string
+		expectedErr1 error
+	}{
+		{"./main.go", ErrIsNotFolderTest},
+		{"./folder_not_exist", ErrFolderNotExistTest},
+	}
 
-	t.Run("Is not folder", func(t *testing.T) {
-		_, res := ReadDir("./folder_not_exist")
-		require.Equal(t, ErrFolderNotExistTest, res)
-	})
+	tests2 := []struct {
+		content []byte
+		res     string
+	}{
+		{[]byte("test_value"), "test_value"},
+		{[]byte("test_value 	"), "test_value"},
+	}
 
-	t.Run("Set test env", func(t *testing.T) {
-		content := []byte("test_value")
-		strContent := strings.Builder{}
-		strContent.Write(content)
+	for i, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("case from test %d", i), func(t *testing.T) {
+			t.Parallel()
+			_, err := ReadDir(tt.start)
+			require.Equal(t, tt.expectedErr1, err)
+		})
+	}
 
-		tmpDir, _ := os.MkdirTemp("", "tmpdir")
-		defer os.RemoveAll(tmpDir)
-		filePath := path.Join(tmpDir, nameFile)
-		tmpFile, _ := os.Create(filePath)
-		defer os.Remove(tmpFile.Name())
-		if _, err := tmpFile.Write(content); err != nil {
-			log.Fatal(err)
-		}
-		if err := tmpFile.Close(); err != nil {
-			log.Fatal(err)
-		}
+	for i, tt2 := range tests2 {
+		tt2 := tt2
+		t.Run(fmt.Sprintf("case from test2 %d", i), func(t *testing.T) {
+			t.Parallel()
 
-		res, err := ReadDir(tmpDir)
-		require.Equal(t, nil, err)
-		resVal := res[nameFile].Value
-		require.Equal(t, strContent.String(), resVal)
-	})
+			strContent := strings.Builder{}
+			strContent.Write(tt2.content)
 
-	t.Run("Set test env with space", func(t *testing.T) {
-		content := []byte("test_value ")
-		check := []byte("test_value")
-		strContent := strings.Builder{}
-		strContent.Write(check)
-
-		tmpDir, _ := os.MkdirTemp("", "tmpdir")
-		defer os.RemoveAll(tmpDir)
-		filePath := path.Join(tmpDir, nameFile)
-		tmpFile, _ := os.Create(filePath)
-		defer os.Remove(tmpFile.Name())
-		if _, err := tmpFile.Write(content); err != nil {
-			log.Fatal(err)
-		}
-		if err := tmpFile.Close(); err != nil {
-			log.Fatal(err)
-		}
-
-		res, err := ReadDir(tmpDir)
-		require.Equal(t, nil, err)
-		resVal := res[nameFile].Value
-		require.Equal(t, strContent.String(), resVal)
-	})
-
-	t.Run("Set test env with tab", func(t *testing.T) {
-		content := []byte("test_value	")
-		check := []byte("test_value")
-		strContent := strings.Builder{}
-		strContent.Write(check)
-
-		tmpDir, _ := os.MkdirTemp("", "tmpdir")
-		defer os.RemoveAll(tmpDir)
-		filePath := path.Join(tmpDir, nameFile)
-		tmpFile, _ := os.Create(filePath)
-		defer os.Remove(tmpFile.Name())
-		if _, err := tmpFile.Write(content); err != nil {
-			log.Fatal(err)
-		}
-		if err := tmpFile.Close(); err != nil {
-			log.Fatal(err)
-		}
-
-		res, err := ReadDir(tmpDir)
-		require.Equal(t, nil, err)
-		resVal := res[nameFile].Value
-		require.Equal(t, strContent.String(), resVal)
-	})
+			tmpDir, _ := os.MkdirTemp("", "tmpdir")
+			defer os.RemoveAll(tmpDir)
+			filePath := path.Join(tmpDir, nameFile)
+			tmpFile, _ := os.Create(filePath)
+			defer os.Remove(tmpFile.Name())
+			if _, err := tmpFile.Write(tt2.content); err != nil {
+				log.Fatal(err)
+			}
+			if err := tmpFile.Close(); err != nil {
+				log.Fatal(err)
+			}
+			res, err := ReadDir(tmpDir)
+			require.Equal(t, nil, err)
+			resVal := res[nameFile].Value
+			require.Equal(t, tt2.res, resVal)
+		})
+	}
 
 	t.Run("BAR test", func(t *testing.T) {
 		res, err := ReadDir("./testdata/env")
